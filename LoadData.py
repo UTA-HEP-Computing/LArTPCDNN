@@ -7,24 +7,7 @@ from time import time
 
 #[u'Eng', u'Track_length', u'enu_truth', u'features', u'lep_mom_truth', u'mode_truth', u'pdg']
 
-#Samples = [ "electron", "pion_0"]
-
-#Nx=2500,Ny=2,Nz=240,Nw=4096
-def DownSample(y,factor,Nx,Ny,Nz,Nw,sumabs=False):
-    if factor==0:
-        return np.reshape(y,[Nx,Ny,Nz,Nw]),Nw
-    # Remove entries at the end so Down Sampling works
-    NwNew=Nw-Nw%factor
-    features1=np.reshape(y,[Nx,Ny,Nz,Nw])[:,:,:,0:NwNew]
-    # DownSample
-    if sumabs:
-       features_Down=abs(features1.reshape([Nz*NwNew/factor,factor])).sum(axis=3).reshape([Nx,Ny,Nz,NwNew/factor])
-    else:
-        features_Down=features1.reshape([Nx,Ny,Nz*NwNew/factor,factor]).sum(axis=3).reshape([Nx,Ny,Nz,NwNew/factor])
-    return features_Down, NwNew
-
-
-
+Samples = [ "electron", "pion_0"]
 
 def shuffle_in_unison_inplace(a, b, c=False):
     assert len(a) == len(b)
@@ -33,92 +16,132 @@ def shuffle_in_unison_inplace(a, b, c=False):
         return a[p], b[p], c[p]
     return a[p], b[p]
 
-Samples = [ "electron", "pion_0"]
-
-def LArIATDataGenerator(InSamples,FileSearch="/data/LArIAT/h5_files"):
-
+def DataGenerator(Samples,BatchSize=1024,path="/data/LArIAT/h5_files"):
     Files={}
     NEvents={}
     ClassIndex={}
-    NSamples=len(InSamples)
-    Status={}
-
-    for I,Sample in enumerate(InSamples):
-        Files[Sample]=glob.glob(FileSearch+"/*"+Sample+"*.h5")
-        NEvents_File=0
-        ClassIndex[Sample]=I
-        print "ClassIndex   =  ",ClassIndex
-        Status[Sample]= { "fileI":0,"eventI":0}
     
+    NSamples=len(Samples)
+    Status={}
+    
+    for I,Sample in enumerate(Samples):
+        Files[Sample]=glob.glob(path+"/*"+Sample+"*.h5")
+        NEvents[Sample]=0
+        ClassIndex[Sample]=I
+        Status[Sample]= { "fileI":0,
+                          "eventI":0}
+
     while True:
-        
+        start=time()
         First=True
-        FileCount=0
-        StartI=0
+        I=0
         NRead={}
-        
         for Sample in Files:
-            NRead[Sample] = 500
-        
+            NRead[Sample]=BatchSize/NSamples
         for Sample in Files:
+            NTotal=0
+            while NTotal<NRead[Sample]:
+                if BatchSize-I<NRead[Sample]:
+                    NRead[Sample]=BatchSize-I
+#                print Sample,Status
+         
+                FileName=Files[Sample][Status[Sample]["fileI"]]
+#                print "Opening File:",FileName
+                f=h5py.File(FileName,"r")
 
-            FileCount+=1
-            ParticleName=Sample
-            FileName=Files[Sample][Status[Sample]["fileI"]]
-            print "Opening File:",FileName
-            f=h5py.File(FileName,"r")
-            NEvents_File=f["features"].shape[0]
-            print "NEvent_File   ",NEvents_File
-            StartI=Status[Sample]["eventI"]
-            print "Firt:StartI",StartI
+                NEvents_File=f["features"].shape[0]
 
-            if NEvents_File < 2500:
-                StartI+=StartI
-                print "Second StartI",StartI
-            else:
-                Status[Sample]["eventI"]=0
-                Status[Sample]["fileI"]+=1
-                print "Files changed to next"
-            
-            y = f["features"]
-            Nx = NEvents_File
-            Ny = 2
-            Nz = 240
-            Nw = 4096
-            Factor = 3
-            features_Down,NwNew=DownSample(y,Factor,Nx,Ny,Nz,Nw)
-            print "features_Down shape",features_Down.shape
-            TheShape= features_Down.shape[:]
-            if First:
+                StartI=Status[Sample]["eventI"]
 
-               Data_X=np.zeros(TheShape)
-               Data_Y=np.zeros((NEvents_File))
-               First = False
+#                print "NRead[Sample]", NRead[Sample]
+#                print "NEvents_File" , NEvents_File 
+#                print "StartI      " , StartI       
 
-            Data_X[:]= features_Down[:]
-            print "Data_X shape",Data_X.shape
-            a=np.empty(NEvents_File); a.fill(ClassIndex[Sample])
-            print "shape a",a.shape, "np.array a",np.array(a)
-            Data_Y[:]= a
-            f.close()
-        print "FileCount",FileCount
+                if NRead[Sample]<NEvents_File-StartI:
+                    NEnd=StartI+NRead[Sample]
+                    Status[Sample]["eventI"]+=NRead[Sample]                                        
+                else:
+                    NEnd=NEvents_File
+                    Status[Sample]["eventI"]=0
+                    Status[Sample]["fileI"]+=1
 
-    Data_X,Data_Y=shuffle_in_unison_inplace(Data_X,Data_Y)
-    yield (Data_X,Data_Y),ClassIndex,NEvents_File
-                 
+                NTotal+=NEnd-StartI
 
-#if MaxFiles>0:
-#if FileCount>MaxFiles:
-#break
+#                print "NEnd",NEnd
+#                print "NTotal",NTotal
+                    
+
+                TheShape=(BatchSize,)+ f["features"].shape[1:]
+
+                if First:
+                    Data_X=np.zeros(TheShape)
+                    Data_Y=np.zeros((BatchSize) )
+                    First=False
+                
+                Data_X[I:I+(NEnd-StartI)]=f["features"][StartI:NEnd]
+                a=np.empty(NEnd-StartI); a.fill(ClassIndex[Sample])
+#                print a.shape
+#                print Data_Y.shape
+#                print I
+                Data_Y[I:I+(NEnd-StartI)]=a
+                I+=NEnd-StartI
+                f.close()
+
+        Data_X,Data_Y=shuffle_in_unison_inplace(Data_X,Data_Y)
+        print "t=",time()-start, 
+                            
+        yield (Data_X,Data_Y),ClassIndex
 
 
-xx = LArIATDataGenerator(Samples)
+xx=DataGenerator(Samples,BatchSize=1024)
 
 I=0
-for (x,y),ClassIndex,NEvents_File in xx:
-    print x.shape,y.shape,ClassIndex,"NEvents_File  ",NEvents_File
-    if I >5:
-         break
-    I +=1
+for (x,y),ClassIndex in xx:
+    print x.shape,y.shape,ClassIndex
+    if I>5:
+        break
+    I+=1
+        
+#(Data_X,Data_Y_),ClassIndex=LoadData(Samples,10000)
+
+
+
+# def LArIATDataGenerator(InSamples,FileSearch="/data/LArIAT/h5_files",
+#                         MaxFiles=-1, verbose=True, OneHot=True, ClassIndex=False,
+#                         ClassIndexMap=False,batchsize=2048):
+    
+#     Files={}
+#     NEvents={}
+#     ClassIndex={}
+    
+#     NSamples=len(InSamples)
+
+#     for I,Sample in enumerate(InSamples):
+#         Files[Sample]=glob.glob(FileSearch+"/*"+Sample+"*.h5")
+#         NEvents[Sample]=0
+#         ClassIndex[Sample]=I
+
+#     FileCount=0
+
+#     Samples=[]
+#     for Sample in InSamples:
+#         for File in Files[Sample]:
+            
+#             FileCount+=1
+#             ParticleName=Sample
+
+#             Samples.append((File,"features",ParticleName))
+
+#         if MaxFiles>0:
+#             if FileCount>MaxFiles:
+#                 break
+
+#     return MultiClassGenerator(Samples,batchsize,
+#                                verbose=verbose, 
+#                                OneHot=OneHot,
+#                                ClassIndex=ClassIndex, 
+#                                Energy=False, 
+#                                ClassIndexMap=ClassIndexMap)
+
 
 

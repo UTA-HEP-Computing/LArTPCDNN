@@ -23,9 +23,6 @@ def DownSample(y,factor,Nx,Ny,Nz,Nw,sumabs=False):
         features_Down=features1.reshape([Nx,Ny,Nz*NwNew/factor,factor]).sum(axis=3).reshape([Nx,Ny,Nz,NwNew/factor])
     return features_Down, NwNew
 
-
-
-
 def shuffle_in_unison_inplace(a, b, c=False):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))

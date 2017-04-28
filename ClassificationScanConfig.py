@@ -5,52 +5,51 @@ import sys,argparse
 from numpy import arange
 import os
 
-# Input for Premixed Generator
-# Find first existing instance
-PossibleInputFile= ["/data/afarbin/LCD/LCD-Merged-All.h5",
-                    "/Users/afarbin/LCD/Data/LCD-Merged-All.h5"]
-try:
-    InputFile=filter( os.path.isfile, PossibleInputFile )[0]
-except:
-    print "Warning: no inputfile found in",PossibleInputFile
-
 # Input for Mixing Generator
-FileSearch="/data/afarbin/LCD/*/*.h5"
+FileSearch="/data/LArIAT/h5_files/*.h5"
 #FileSearch="/Users/afarbin/LCD/Data/*/*.h5"
+
+Particles= ['electron', 'antielectron',
+            'pion',             
+            'photon',
+            'pionPlus', 'pionMinus',
+            'proton', 'antiproton',
+            'muon', 'antimuon',
+            'kaonMinus', 'kaonPlus']
 
 # Generation Model
 Config={
-    "MaxEvents":int(3.e6),
-    "NTestSamples":100000,
-    "NClasses":4,
+    "MaxEvents":int(.5e6),
+    "NTestSamples":25000,
+
+    "Particles":Particles,
+    "NClasses":len(Particles),
 
     "Epochs":1000,
-    "BatchSize":1024,
+    "BatchSize":128,
 
+    "DownSampleSize":8,
+    "ScanWindowSize":256,
+    "Normalize":True,
+
+    "EnergyCut":0.61,
+    
     # Configures the parallel data generator that read the input.
     # These have been optimized by hand. Your system may have
     # more optimal configuration.
-    "n_threads":4,  # Number of workers
-    "multiplier":2, # Read N batches worth of data in each worker
+    "n_threads":50,  # Number of workers
+    "n_threads_cache":4,  # Number of workers
+    "multiplier":1, # Read N batches worth of data in each worker
 
     # How weights are initialized
     "WeightInitialization":"'normal'",
 
-    # Normalization determined by hand.
-    "ECAL":True,
-    "ECALNorm":150.,
 
-    # Normalization needs to be determined by hand. 
-    "HCAL":True,
-    "HCALNorm":150.,
-
-    # Set the ECAL/HCAL Width/Depth for the Dense model.
-    # Note that ECAL/HCAL Width/Depth are changed to "Width" and "Depth",
-    # if these parameters are set. 
-    "HCALWidth":32,
-    "HCALDepth":2,
-    "ECALWidth":32,
-    "ECALDepth":2,
+    # Model
+    "View1":True,
+    "View2":True,
+    "Width":32,
+    "Depth":2,
 
     # No specific reason to pick these. Needs study.
     # Note that the optimizer name should be the class name (https://keras.io/optimizers/)
@@ -105,15 +104,6 @@ if "HyperParamSet" in dir():
     i=int(HyperParamSet)
 
 for k in Combos[i]: Config[k]=Combos[i][k]
-
-# Use the same Width and/or Depth for ECAL/HCAL if these parameters 
-# "Width" and/or "Depth" are set.
-if "Width" in Config:
-    Config["ECALWidth"]=Config["Width"]
-    Config["HCALWidth"]=Config["Width"]
-if "Depth" in Config:
-    Config["ECALDepth"]=Config["Depth"]
-    Config["HCALDepth"]=Config["Depth"]
 
 # Build a name for the this configuration using the parameters we are
 # scanning.

@@ -62,7 +62,40 @@ def ScanWindow(inData,BoxSizeX=256,Nx=240,Ny=4096):
             out[II]=Data[:,:,BoxStart:BoxStart+BoxSizeX]
 
     return out,BoxStart,MaxSum
-     
+
+# From Peter Sadowski
+def crop_example(X, interval, augment=None):
+    ''' 
+    Crop X by finding time interval with maximal energy. 
+    X  = tensor of shape (num_channel, x, y) = (2 channels, 240 wires, time steps)
+    interval = length of desired time step window
+    augment  = If integer, randomly translate the time window up to this many steps.
+    '''
+    assert len(X.shape) == 3, "Example is expected to be three-dimensional."
+    energy = np.sum(X, axis=(0,1))
+    assert energy.ndim == 1
+    cumsum = np.cumsum(energy, dtype='float64')
+    assert not np.any(np.isnan(cumsum))
+    assert np.all(np.isfinite(cumsum))
+    intsum = cumsum[interval:] - cumsum[:-interval]
+    maxstart = np.argmax(intsum) # NOTE: maxend=interval+np.argmax(intsum)
+    
+    if augment:
+        rsteps = np.random.random_integers(-augment, augment)
+        if rsteps < 0:
+            maxstart = max(0, maxstart + rsteps)
+        else:
+            maxstart = min(len(energy)-interval, maxstart + rsteps)
+
+    return X[:, :, maxstart:maxstart+interval]
+
+def crop_batch(X, interval, augment=None):
+    new_X = np.zeros(shape=(X.shape[0],X.shape[1],X.shape[2],interval), dtype='float32')
+    for i in range(X.shape[0]):
+        new_X[i,:,:,:] = crop_example(X[i,:,:,:], interval, augment)
+    return new_X
+
+
 def FilterEnergy(MinEnergy):
     def filterfunction(batchdict):
         r= np.where(np.array(batchdict['Eng']) > MinEnergy)
@@ -77,11 +110,12 @@ def ProcessWireData(DownSampleFactor,ScanWindowSize,Norm=True):
         if DownSampleFactor > 1:
             X,Ny= DownSample(X,DownSampleFactor,BatchSize)
         if ScanWindowSize>0:
-            X,i,j=ScanWindow(X,ScanWindowSize,240,Ny)
+            #X,i,j=ScanWindow(X,ScanWindowSize,240,Ny)
+            X=crop_batch(X,ScanWindowSize)
 
         if Norm:
             X = np.tanh(np.sign(X) * np.log(np.abs(X) + 1.0) / 2.0)
-        return [X]+D[1:]
+        return [X[:,0,:,:],X[:,1,:,:]] +D[1:]
     return processfunction
     
 
@@ -114,9 +148,72 @@ def LArIATDataGenerator(FileSearch="/data/LArIAT/*.h5",DownSampleSize=4, ScanWin
     GC= DLMultiClassFilterGenerator(Samples, FilterEnergy(EnergyCut), 
                                     preprocessfunction=ProcessWireData(DownSampleSize,ScanWindowSize,Norm),
                                     **kwargs)
-    GC.datasets=datasetnames
     return GC
 
+def MergeInputsOld():
+    def f(X):
+        return [X[0][:,0,:,:],X[0][:,1,:,:]],X[1]
+    return f
+
+def MergeInputs():
+    def f(X):
+        return [X[0],X[1]],X[2]
+    return f
+
+
+
+def DivideFiles(FileSearch="/data/LArIAT/h5_files/*.h5",Fractions=[.9,.1],datasetnames=[u'features'],Particles=[],MaxFiles=-1):
+    print "Searching in :",FileSearch
+    Files = glob.glob(FileSearch)
+
+    print "Found",len(Files),"files."
+    
+    if MaxFiles!=-1:
+        random.shuffle(Files)
+        Files=Files[:MaxFiles]
+        
+    Samples={}
+
+    FileCount=0
+
+    for F in Files:
+        FileCount+=1
+        basename=os.path.basename(F)
+        ParticleName=basename.split("_")[0]
+
+        if len(Particles)>0:
+            if not ParticleName in Particles:
+                #print "Skipping Particle Type",ParticleName
+                continue
+        
+        try:
+            Samples[ParticleName].append((F,datasetnames,ParticleName))
+        except:
+            Samples[ParticleName]=[(F,datasetnames,ParticleName)]
+            
+        if MaxFiles>0:
+            if FileCount>MaxFiles:
+                break
+    
+    out=[] 
+    for j in range(len(Fractions)):
+        out.append([])
+        
+    SampleI=len(Samples.keys())*[int(0)]
+    
+    for i,SampleName in enumerate(Samples):
+        Sample=Samples[SampleName]
+        NFiles=len(Sample)
+
+        for j,Frac in enumerate(Fractions):
+            EndI=int(SampleI[i]+round(NFiles*Frac))
+            out[j]+=Sample[SampleI[i]:EndI]
+            SampleI[i]=EndI+1
+
+    return out
+
+
+                     
 if __name__ == '__main__':
     import sys
     FileSearch="/data/LArIAT/h5_files/*.h5"

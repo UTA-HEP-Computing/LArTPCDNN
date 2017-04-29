@@ -84,4 +84,15 @@ class MergerModel(ModelWrapper):
         
         self.Model=Model(MInputs,modelT)
 
-                
+class Model2DViewsTo3D(ModelWrapper):
+    def __init__(self, Name, View1, View2, Voxels, **kwargs):
+        super(MergerModel, self).__init__(Name,**kwargs)
+        self.View1 = View1
+        self.View2 = View2
+        self.N_Classes = Voxels[0]*Voxels[1]*Voxels[2]
+        self.MetaData.update({"N_classes": self.N_classes,
+                              "init": self.init})
+
+    def Build(self):
+        modelT = concatenate([self.View1, self.View2])
+        modelT = Dense(self.N_Classes, activation='softmax',kernel_initializer=self.init)(modelT)

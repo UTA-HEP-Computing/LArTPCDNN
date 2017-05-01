@@ -16,7 +16,7 @@ OutputBase="TrainedModels"
 if TestMode:
     MaxEvents=int(20e3)
     NTestSamples=int(20e2)
-    Epochs=2
+    Epochs=10
     OutputBase+=".Test"
     print "Test Mode: Set MaxEvents to",MaxEvents,"and Epochs to", Epochs
 

@@ -9,6 +9,13 @@ import os
 FileSearch="/data/LArIAT/h5_files/*.h5"
 #FileSearch="/Users/afarbin/LCD/Data/*/*.h5"
 
+from multiprocessing import cpu_count
+from DLTools.Utils import gpu_count
+
+max_threads=12
+n_threads=int(min(round(2*cpu_count()/gpu_count()),max_threads))
+print "Found",cpu_count(),"CPUs and",gpu_count(),"GPUs. Using",n_threads,"threads. max_threads =",max_threads
+
 Particles= ['electron', 'antielectron',
             'pion',             
             'photon',
@@ -37,13 +44,12 @@ Config={
     # Configures the parallel data generator that read the input.
     # These have been optimized by hand. Your system may have
     # more optimal configuration.
-    "n_threads":50,  # Number of workers
-    "n_threads_cache":4,  # Number of workers
+    "n_threads":n_threads,  # Number of workers when using mixing generator.
+    "n_threads_cache":4,  # Number of workers reading cached data.
     "multiplier":1, # Read N batches worth of data in each worker
 
     # How weights are initialized
     "WeightInitialization":"'normal'",
-
 
     # Model
     "View1":True,
@@ -64,7 +70,7 @@ Config={
     # Note if parameter is not specified, default values are used.
     "optimizer":"'RMSprop'",
     "lr":0.01,    
-    "decay":0.001,
+    "decay":0.01,
 
     # Parameter monitored by Callbacks
     "monitor":"'val_loss'",
@@ -81,16 +87,13 @@ Config={
     "RunningTime": 2*3600,
 
     # Load last trained version of this model configuration. (based on Name var below)
-    "LoadPreviousModel":True
+    "LoadPreviousModel":True,
+
 }
 
 # Parameters to scan and their scan points.
-Params={    "optimizer":["'RMSprop'","'Adam'","'SGD'"],
-            "Width":[32,64,128,256,512],
-            "Depth":range(1,5),
-            "lr":[0.01,0.001],
-            "decay":[0.01,0.001],
-          }
+Params={ "Width":[32,64,128,256,512],
+         "Depth":range(1,5) }
 
 # Get all possible configurations.
 PS=Permutator(Params)

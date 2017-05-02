@@ -7,7 +7,6 @@ execfile("LArTPCDNN/ClassificationArguments.py")
 execfile(ConfigFile)
 
 # Load the Data. TODO
-
 from LArTPCDNN.LoadData import * 
 
 # TrainSampleList,TestSampleList=DivideFiles(FileSearch,[float(NSamples)/MaxEvents,float(NTestSamples)/MaxEvents],
@@ -93,7 +92,10 @@ if FailedLoad:
     import keras
     print "Building Model...",
 
-    ReconstructionModel=Model2DViewsTo3D(Name, View1, View2, Width, Depth,
+    View1Shape = (240, 4096)
+    View2Shape = (240, 4096)
+
+    ReconstructionModel=Model2DViewsTo3D(Name, View1Shape, View2Shape, Width, Depth,
                                                 BatchSize, NClasses,
                                                 init=TestDefaultParam("WeightInitialization",'normal'),
                                                 #activation=TestDefaultParam("activation","relu"),

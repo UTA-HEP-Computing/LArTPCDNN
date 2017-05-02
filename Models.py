@@ -85,9 +85,9 @@ class MergerModel(ModelWrapper):
         self.Model=Model(MInputs,modelT)
 
 class Model2DViewsTo3D(ModelWrapper):
-    def __init__(self, Name, View1, View2, width=0, depth=0, BatchSize=2048, N_Classes,
+    def __init__(self, Name, View1Shape, View2Shape, width=0, depth=0, BatchSize=2048, N_Classes=0,
                  init=0, BatchNormalization=False, Dropout=False, **kwargs):
-        super(MergerModel, self).__init__(Name,**kwargs)
+        super(Model2DViewsTo3D, self).__init__(Name,**kwargs)
         
         
         self.width=width
@@ -98,8 +98,8 @@ class Model2DViewsTo3D(ModelWrapper):
         self.BatchSize=BatchSize
         self.BatchNormalization=BatchNormalization
         
-        self.input1_shape = View1.shape
-        self.input2_shape = View2.shape
+        self.input1_shape = View1Shape
+        self.input2_shape = View2Shape
         self.N_Classes = N_Classes
         
         self.MetaData.update({ "width":self.width,
@@ -108,7 +108,7 @@ class Model2DViewsTo3D(ModelWrapper):
                                "BatchNormalization":BatchNormalization,
                                "input1_shape":self.input1_shape,
                                "input2_shape":self.input2_shape,
-                               "N_classes":self.N_classes,
+                               "N_classes":self.N_Classes,
                                "init":self.init})
 
     def Build(self):
@@ -131,7 +131,6 @@ class Model2DViewsTo3D(ModelWrapper):
             if self.Dropout:
                 modelT=Dropout(self.Dropout)(modelT)
 
-        if not self.NoClassificationLayer:
-            modelT=Dense(self.N_classes, activation='softmax',kernel_initializer=self.init)(modelT)
+        modelT=Dense(self.N_Classes, activation='softmax',kernel_initializer=self.init)(modelT)
         
         self.Model=Model(input,modelT)

@@ -126,3 +126,36 @@ if "HyperParamSet" in dir():
 else:
     for ii,c in enumerate(Combos):
         print "Combo["+str(ii)+"]="+str(c)
+
+# Now put config in the current scope. Must find a prettier way.
+if "Config" in dir():
+    for a in Config:
+        exec(a+"="+str(Config[a]))
+
+# Use "--Test" to run on less events and epochs.
+OutputBase="TrainedModels"
+if TestMode:
+    MaxEvents=int(20e3)
+    NTestSamples=int(20e2)
+    Epochs=10
+    OutputBase+=".Test"
+    print "Test Mode: Set MaxEvents to",MaxEvents,"and Epochs to", Epochs
+
+if LowMemMode:
+    n_threads=1
+    multiplier=1
+    
+# Calculate how many events will be used for training/validation.
+NSamples=MaxEvents-NTestSamples
+
+# Function to help manage optional configurations. Checks and returns
+# if an object is in current scope. Return default value if not.
+def TestDefaultParam(Config):
+    def TestParamPrime(param,default=False):
+        if param in Config:
+            return eval(param)
+        else:
+            return default
+    return TestParamPrime
+
+TestDefaultParam=TestDefaultParam(dir())

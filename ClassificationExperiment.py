@@ -63,7 +63,7 @@ else:
 def MakeGenerator(SampleList,NSamples,
                   cachefile="LArIAT-LoadDataTest-Cache.h5",**kwargs):
 
-    return DLMultiClassFilterGenerator(TrainSampleList, FilterEnergy(EnergyCut), max=NSamples,
+    return DLMultiClassFilterGenerator(SampleList, FilterEnergy(EnergyCut), max=NSamples,
                                        preprocessfunction=ProcessWireData(DownSampleSize,ScanWindowSize,Normalize),
                                        postprocessfunction=MergeInputs(),
                                        batchsize=BatchSize,

@@ -23,7 +23,7 @@ def LarTPCDataGeneratorOld(Directory="/data/", batchsize=16, datasets=[u'3DImage
 def LarTPCDataGenerator(Directory="/data", batchsize=16, datasets=['images3D/C','images3D/V'], Norm=True,
                       bins=(240,240,256),**kwargs):
 
-    Samples = [ (Directory+"muon_158.3d.h5", datasets)]
+    Samples = [ (Directory+"muon_158.3d.h5", datasets, "data")]
 
     def MakeImage(bins,Norm=True):
         def f(D):
@@ -97,7 +97,7 @@ if __name__ == '__main__' and Test==0:
 
 if __name__ == '__main__' and Test==1:
     import sys
-    Directory="/data/datasets/LarTPC/"
+    Directory="/data/cloud/project/data/apr_9/3d/"
 
     try:
         n_threads=int(sys.argv[1])
@@ -110,7 +110,7 @@ if __name__ == '__main__' and Test==1:
         n_threads2=n_threads
 
     Train_gen=LarTPCDataGenerator(Directory,n_threads=n_threads,max=100000,
-                                bins=(100,100,100),verbose=False)
+                                bins=(240,240,256),verbose=False)
     
     print "Generator Ready"
     print "ClassIndex:", Train_gen.ClassIndexMap

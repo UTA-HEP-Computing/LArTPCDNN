@@ -44,62 +44,66 @@ TestDefaultParam = TestDefaultParam(dir())
 
 # Load the Data. TODO
 from LArTPCDNN.LoadData import *
+from LArTPCDNN.Recon3DLoadData import *
 
-# TrainSampleList,TestSampleList=DivideFiles(FileSearch,[float(NSamples)/MaxEvents,float(NTestSamples)/MaxEvents],
-# datasetnames=[u'features'],
-# Particles=Particles)
+FileSearch = "h5/*.h5"
 
-# # Figure out the output shape... This is not necessary. But the automatic mechanism is inefficient.
-# if ScanWindowSize>0:
-# #    shapes=[(BatchSize*multiplier, 2, 240, ScanWindowSize), (BatchSize*multiplier, NClasses)]
-# shapes=[(BatchSize*multiplier, 240, ScanWindowSize),
-# (BatchSize*multiplier, 240, ScanWindowSize),
-# (BatchSize*multiplier, NClasses)]
-# viewshape=(None, 240, ScanWindowSize)
-# else:
-# shapes=[(BatchSize*multiplier, 240, 4096/DownSampleSize),
-# (BatchSize*multiplier, 240, 4096/DownSampleSize),
-# (BatchSize*multiplier, NClasses)]
+TrainSampleList, TestSampleList = DivideFiles(FileSearch,
+                                              [float(NSamples) / MaxEvents, float(NTestSamples) / MaxEvents],
+                                              datasetnames=[u'features'],
+                                              Particles=Particles)
 
-# viewshape=(None, 240, 4096/DownSampleSize)
+# Figure out the output shape... This is not necessary. But the automatic mechanism is inefficient.
+if ScanWindowSize > 0:
+    #    shapes=[(BatchSize*multiplier, 2, 240, ScanWindowSize), (BatchSize*multiplier, NClasses)]
+    shapes = [(BatchSize * multiplier, 240, ScanWindowSize),
+              (BatchSize * multiplier, 240, ScanWindowSize),
+              (BatchSize * multiplier, NClasses)]
+    viewshape = (None, 240, ScanWindowSize)
+else:
+    shapes = [(BatchSize * multiplier, 240, 4096 / DownSampleSize),
+              (BatchSize * multiplier, 240, 4096 / DownSampleSize),
+              (BatchSize * multiplier, NClasses)]
 
-# def MakeGenerator(SampleList,NSamples,
-# cachefile="LArIAT-LoadDataTest-Cache.h5",**kwargs):
+viewshape = (None, 240, 4096 / DownSampleSize)
 
-# return DLMultiClassFilterGenerator(TrainSampleList, FilterEnergy(EnergyCut), max=NSamples,
-# preprocessfunction=ProcessWireData(DownSampleSize,ScanWindowSize,Normalize),
-# postprocessfunction=MergeInputs(),
-# batchsize=BatchSize,
-# shapes=shapes,
-# n_threads=n_threads,
-# multiplier=multiplier,
-# cachefile=cachefile,
-# **kwargs)
 
-# # Use DLGenerators to read data
-# Train_genC = MakeGenerator(TrainSampleList, NSamples,
-# cachefile="/tmp/LArTPCDNN-LArIAT-TrainEvent-Cache.h5")
+def MakeGenerator(SampleList, NSamples,
+                  cachefile="LArIAT-LoadDataTest-Cache.h5", **kwargs):
+    return DLMultiClassFilterGenerator(TrainSampleList, FilterEnergy(EnergyCut), max=NSamples,
+                                       preprocessfunction=ProcessWireData(DownSampleSize, ScanWindowSize, Normalize),
+                                       postprocessfunction=MergeInputs(),
+                                       batchsize=BatchSize,
+                                       shapes=shapes,
+                                       n_threads=n_threads,
+                                       multiplier=multiplier,
+                                       cachefile=cachefile,
+                                       **kwargs)
 
-# Test_genC = MakeGenerator(TestSampleList, NTestSamples,
-# cachefile="/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
 
-# print "Train Class Index Map:", Train_genC.ClassIndexMap
-# #print "Test Class Index Map:", Test_genC.ClassIndexMap
+# Use DLGenerators to read data
+Train_genC = MakeGenerator(TrainSampleList, NSamples,
+                           cachefile="/tmp/LArTPCDNN-LArIAT-TrainEvent-Cache.h5")
 
-# Cache=True
+Test_genC = MakeGenerator(TestSampleList, NTestSamples,
+                          cachefile="/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
 
-# if Preload:
-# print "Caching data in memory for faster processing after first epoch. Hope you have enough memory."
-# Train_gen=Train_genC.PreloadGenerator()
-# Test_gen=Test_genC.PreloadGenerator()
-# elif Cache:
-# print "Caching data on disk for faster processing after first epoch. Hope you have enough disk space."
-# Train_gen=Train_genC.DiskCacheGenerator(n_threads_cache)
-# Test_gen=Test_genC.DiskCacheGenerator(n_threads_cache)
-# else:
-# Train_gen=Train_genC.Generator()
-# Test_gen=Test_genC.Generator()
+print "Train Class Index Map:", Train_genC.ClassIndexMap
+# print "Test Class Index Map:", Test_genC.ClassIndexMap
 
+Cache = True
+
+if Preload:
+    print "Caching data in memory for faster processing after first epoch. Hope you have enough memory."
+    Train_gen = Train_genC.PreloadGenerator()
+    Test_gen = Test_genC.PreloadGenerator()
+elif Cache:
+    print "Caching data on disk for faster processing after first epoch. Hope you have enough disk space."
+    Train_gen = Train_genC.DiskCacheGenerator(n_threads_cache)
+    Test_gen = Test_genC.DiskCacheGenerator(n_threads_cache)
+else:
+    Train_gen = Train_genC.Generator()
+    Test_gen = Test_genC.Generator()
 
 # Build/Load the Model
 from DLTools.ModelWrapper import ModelWrapper

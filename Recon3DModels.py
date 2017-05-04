@@ -94,16 +94,14 @@ class Model2DViewsTo3DConv(ModelWrapper):
         input1 = Input(self.input1_shape)
         input2 = Input(self.input2_shape)
 
-        input_img = Input(shape=(240, 4086, 1))  # adapt this if using `channels_first` image data format
-
-        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same')(input_img)
+        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same')(input1)
         x = MaxPooling2D((2, 2), padding='same')(x)
         x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
         x = MaxPooling2D((2, 2), padding='same')(x)
         x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
         encoded1 = MaxPooling2D((2, 2), padding='same')(x)
 
-        y = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same')(input_img)
+        y = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same')(input2)
         y = MaxPooling2D((2, 2), padding='same')(y)
         y = Conv2D(32, (3, 3), activation='relu', padding='same')(y)
         y = MaxPooling2D((2, 2), padding='same')(y)
@@ -123,6 +121,5 @@ class Model2DViewsTo3DConv(ModelWrapper):
         decoded = Conv3D(1, (3, 3), activation='sigmoid', padding='same')(z)
 
         autoencoder = Model(inputs=[input1, input2], outputs=decoded)
-        autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-        self.Model = Model(input, modelT)
+        self.Model = Model(input, autoencoder)

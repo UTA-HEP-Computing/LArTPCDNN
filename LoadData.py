@@ -31,37 +31,6 @@ def DownSample(y,factor,batchsize,sumabs=False):
         features_Down=features1.reshape([Nx,Ny,Nz*NwNew/factor,factor]).sum(axis=3).reshape([Nx,Ny,Nz,NwNew/factor])
     return features_Down, NwNew
 
-def GetXWindow(Data,i,BoxSizeX):
-    return Data[:,:,i:i+BoxSizeX]
-
-def ScanWindow(inData,BoxSizeX=256,Nx=240,Ny=4096):
-    NyNew=Ny
-    #Scan the Window
-
-    first=True
-    out=False
-    
-    for II in xrange(inData.shape[0]):
-        Data=inData[II]
-        b=np.array([0]*(NyNew-BoxSizeX))
-
-        for i in xrange(0,NyNew-BoxSizeX):
-            b[i]=GetXWindow(Data,i,BoxSizeX).clip(0,99999999999).sum()
-
-        #Find the Window with max Energy/Charge
-        BoxStart=b.argmax()
-        MaxSum=b[BoxStart]
-
-        #Store the window
-        if first:
-            first=False
-            Box=Data[:,:,BoxStart:BoxStart+BoxSizeX]
-            out=np.zeros((inData.shape[0],)+Box.shape)
-            out[II]=Box
-        else:
-            out[II]=Data[:,:,BoxStart:BoxStart+BoxSizeX]
-
-    return out,BoxStart,MaxSum
 
 # From Peter Sadowski
 def crop_example(X, interval, augment=None):
@@ -110,7 +79,6 @@ def ProcessWireData(DownSampleFactor,ScanWindowSize,Norm=True):
         if DownSampleFactor > 1:
             X,Ny= DownSample(X,DownSampleFactor,BatchSize)
         if ScanWindowSize>0:
-            #X,i,j=ScanWindow(X,ScanWindowSize,240,Ny)
             X=crop_batch(X,ScanWindowSize)
 
         if Norm:

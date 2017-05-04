@@ -13,7 +13,7 @@ from multiprocessing import cpu_count
 from DLTools.Utils import gpu_count
 
 max_threads=12
-n_threads=int(min(round(2*cpu_count()/gpu_count()),max_threads))
+n_threads=int(min(round(cpu_count()/gpu_count()),max_threads))
 print "Found",cpu_count(),"CPUs and",gpu_count(),"GPUs. Using",n_threads,"threads. max_threads =",max_threads
 
 Particles= ['electron', 'antielectron',

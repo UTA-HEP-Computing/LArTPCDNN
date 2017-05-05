@@ -46,24 +46,17 @@ TestDefaultParam = TestDefaultParam(dir())
 from LArTPCDNN.LoadData import *
 from LArTPCDNN.Recon3DLoadData import *
 
-FileSearch = "h5/*.h5"
+FileSearch = "apr_9/2d/muon*.h5"
 
 TrainSampleList, TestSampleList = DivideFiles(FileSearch,
                                               [float(NSamples) / MaxEvents, float(NTestSamples) / MaxEvents],
                                               datasetnames=[u'features'],
                                               Particles=Particles)
+bins3d=(240, 240, 256)
 
-# Figure out the output shape... This is not necessary. But the automatic mechanism is inefficient.
-if ScanWindowSize > 0:
-    #    shapes=[(BatchSize*multiplier, 2, 240, ScanWindowSize), (BatchSize*multiplier, NClasses)]
-    shapes = [(BatchSize * multiplier, 240, ScanWindowSize),
-              (BatchSize * multiplier, 240, ScanWindowSize),
-              (BatchSize * multiplier, NClasses)]
-    viewshape = (None, 240, ScanWindowSize)
-else:
-    shapes = [(BatchSize * multiplier, 240, 4096 / DownSampleSize),
-              (BatchSize * multiplier, 240, 4096 / DownSampleSize),
-              (BatchSize * multiplier, NClasses)]
+shapes = [(BatchSize * multiplier, 240, 4096 / DownSampleSize),
+          (BatchSize * multiplier, 240, 4096 / DownSampleSize),
+          (BatchSize * multiplier,) + bins3d]
 
 viewshape = (None, 240, 4096 / DownSampleSize)
 

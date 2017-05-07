@@ -6,7 +6,7 @@ from DLTools.ThreadedGenerator import DLMultiClassGenerator, DLMultiClassFilterG
 
 
 def main():
-    datapath = "/data/datasets/LarTPC/apr_9/"
+    datapath = "/data/cloud/project/data/apr_9/"
 
     # Pull in datafiles
     filelist2d = glob.glob(datapath + "2d/*")

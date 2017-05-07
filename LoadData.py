@@ -188,7 +188,7 @@ if __name__ == '__main__':
     #FileSearch="/data/LArIAT/h5_files/*.h5"
     
     # CHANGE TO /data/cloud/project/data/apr_9/2d/*.h5
-    FileSearch="/data/datasets/LarTPC/apr_9/2d/*.h5"
+    FileSearch="/data/cloud/project/data/apr_9/2d/*.h5"
     try:
         n_threads=int(sys.argv[1])
     except:
@@ -218,7 +218,7 @@ if __name__ == '__main__':
                                   ScanWindowSize=ScanWindowSize,
                                   Norm=Normalize,
                                   #shapes=[(128*m, 2, 240, 4096/DownSampleSize), (128*m, 16)],
-                                  shapes=[(128*m, 240, ScanWindowSize), (128, 240, 256)],
+                                  #shapes=[(128*m, 240, ScanWindowSize), (128, 240, 256)],
                                   n_threads=n_threads,
                                   SharedDataQueueSize=1,
                                   multiplier=m,

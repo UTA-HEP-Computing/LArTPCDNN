@@ -46,41 +46,47 @@ TestDefaultParam = TestDefaultParam(dir())
 from LArTPCDNN.LoadData import *
 from LArTPCDNN.Recon3DLoadData import *
 
-FileSearch = "apr_9/2d/muon*.h5"
+print "Loading 2D and 3D data"
 
-TrainSampleList, TestSampleList = DivideFiles(FileSearch,
-                                              [float(NSamples) / MaxEvents, float(NTestSamples) / MaxEvents],
-                                              datasetnames=[u'features'],
-                                              Particles=Particles)
-bins3d=(240, 240, 256)
+Train2D, Train3D = combined2D3DGenerator()
 
-shapes = [(BatchSize * multiplier, 240, 4096 / DownSampleSize),
-          (BatchSize * multiplier, 240, 4096 / DownSampleSize),
-          (BatchSize * multiplier,) + bins3d]
+print "Testing 2D and 3D data load"
 
-viewshape = (None, 240, 4096 / DownSampleSize)
-
-
-def MakeGenerator(SampleList, NSamples,
-                  cachefile="LArIAT-LoadDataTest-Cache.h5", **kwargs):
-    return DLMultiClassFilterGenerator(TrainSampleList, FilterEnergy(EnergyCut), max=NSamples,
-                                       preprocessfunction=ProcessWireData(DownSampleSize, ScanWindowSize, Normalize),
-                                       postprocessfunction=MergeInputs(),
-                                       batchsize=BatchSize,
-                                       shapes=shapes,
-                                       n_threads=n_threads,
-                                       multiplier=multiplier,
-                                       cachefile=cachefile,
-                                       **kwargs)
-
-
-# Use DLGenerators to read data
-Train_genC = MakeGenerator(TrainSampleList, NSamples,
-                           cachefile="/tmp/LArTPCDNN-LArIAT-TrainEvent-Cache.h5")
-
-Test_genC = MakeGenerator(TestSampleList, NTestSamples,
-                          cachefile="/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
-
+#FileSearch = "apr_9/2d/muon*.h5"
+#
+#TrainSampleList, TestSampleList = DivideFiles(FileSearch,
+#                                              [float(NSamples) / MaxEvents, float(NTestSamples) / MaxEvents],
+#                                              datasetnames=[u'features'],
+#                                              Particles=Particles)
+#bins3d=(240, 240, 256)
+#
+#shapes = [(BatchSize * multiplier, 240, 4096 / DownSampleSize),
+#          (BatchSize * multiplier, 240, 4096 / DownSampleSize),
+#          (BatchSize * multiplier,) + bins3d]
+#
+#viewshape = (None, 240, 4096 / DownSampleSize)
+#
+#
+#def MakeGenerator(SampleList, NSamples,
+#                  cachefile="LArIAT-LoadDataTest-Cache.h5", **kwargs):
+#    return DLMultiClassFilterGenerator(TrainSampleList, FilterEnergy(EnergyCut), max=NSamples,
+#                                       preprocessfunction=ProcessWireData(DownSampleSize, ScanWindowSize, Normalize),
+#                                       postprocessfunction=MergeInputs(),
+#                                       batchsize=BatchSize,
+#                                       shapes=shapes,
+#                                       n_threads=n_threads,
+#                                       multiplier=multiplier,
+#                                       cachefile=cachefile,
+#                                       **kwargs)
+#
+#
+## Use DLGenerators to read data
+#Train_genC = MakeGenerator(TrainSampleList, NSamples,
+#                           cachefile="/tmp/LArTPCDNN-LArIAT-TrainEvent-Cache.h5")
+#
+#Test_genC = MakeGenerator(TestSampleList, NTestSamples,
+#                          cachefile="/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
+#
 print "Train Class Index Map:", Train_genC.ClassIndexMap
 # print "Test Class Index Map:", Test_genC.ClassIndexMap
 

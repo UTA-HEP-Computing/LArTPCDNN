@@ -43,7 +43,7 @@ TestDefaultParam=TestDefaultParam(dir())
 from LArTPCDNN.LoadData import * 
 
 TrainSampleList,TestSampleList=DivideFiles(FileSearch,[float(NSamples)/MaxEvents,float(NTestSamples)/MaxEvents],
-                                           datasetnames=[u'features'],
+                                           datasetnames=[u'images'],
                                            Particles=Particles)
 
 # Figure out the output shape... This is not necessary. But the automatic mechanism is inefficient.

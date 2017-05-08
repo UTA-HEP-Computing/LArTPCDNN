@@ -6,7 +6,7 @@ from numpy import arange
 import os
 
 # Input for Mixing Generator
-FileSearch="/Users/afarbin/LCD/Data/*/*.h5"
+FileSearch="/data/LArIAT/h5_files_2D_3D/2D_h5/*.h5"
 
 from multiprocessing import cpu_count
 from DLTools.Utils import gpu_count

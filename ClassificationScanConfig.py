@@ -20,7 +20,7 @@ Particles= ['electron', 'antielectron',
             'pion',             
             'photon',
             'pionPlus', 'pionMinus',
-            'proton', 'antiproton',
+            #'proton', 'antiproton',
             'muon', 'antimuon',
             'kaonMinus', 'kaonPlus']
 

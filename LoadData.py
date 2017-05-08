@@ -4,8 +4,6 @@ import numpy as np
 
 from DLTools.ThreadedGenerator import DLMultiClassFilterGenerator
 
-#[u'Eng', u'Track_length', u'enu_truth', u'features', u'lep_mom_truth', u'mode_truth', u'pdg']
-
 def shuffle_in_unison_inplace(a, b, c=False):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
@@ -67,7 +65,7 @@ def crop_batch(X, interval, augment=None):
 
 def FilterEnergy(MinEnergy):
     def filterfunction(batchdict):
-        r= np.where(np.array(batchdict['Eng']) > MinEnergy)
+        r= np.where(np.array(batchdict['Energy']) > MinEnergy)
         return r[0]
 
     return filterfunction
@@ -88,7 +86,7 @@ def ProcessWireData(DownSampleFactor,ScanWindowSize,Norm=True):
     
 
 def LArIATDataGenerator(FileSearch="/data/LArIAT/*.h5",DownSampleSize=4, ScanWindowSize=256,EnergyCut=0.61,
-                        datasetnames=[u'features'], Norm=False, MaxFiles=-1, **kwargs):
+                        datasetnames=[u'images'], Norm=False, MaxFiles=-1, **kwargs):
 
     print "Searching in :",FileSearch
     Files = glob.glob(FileSearch)
@@ -130,7 +128,7 @@ def MergeInputs():
 
 
 
-def DivideFiles(FileSearch="/data/LArIAT/h5_files/*.h5",Fractions=[.9,.1],datasetnames=[u'features'],Particles=[],MaxFiles=-1):
+def DivideFiles(FileSearch="/data/LArIAT/h5_files/*.h5",Fractions=[.9,.1],datasetnames=[u'images'],Particles=[],MaxFiles=-1):
     print "Searching in :",FileSearch
     Files = glob.glob(FileSearch)
 

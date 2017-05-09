@@ -57,11 +57,10 @@ def combined2D3DGenerator():
         while True:
             s2d = T2D.Generator().next()
             s3d = T3D.Generator().next()
-
-            if not T2D or not T3D:
+            if s2d and s3d:
+                yield s2d, s3d
+            else:
                 break
-
-            yield s2d, s3d
 
     return MergerGenerator(Train_gen2D, Train_gen3D)
 

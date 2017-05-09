@@ -48,7 +48,7 @@ from LArTPCDNN.Recon3DLoadData import *
 
 print "Loading 2D and 3D data"
 
-Train2D, Train3D = combined2D3DGenerator()
+#Train_gen = combined2D3DGenerator()
 
 print "Testing 2D and 3D data load"
 
@@ -87,26 +87,26 @@ print "Testing 2D and 3D data load"
 #Test_genC = MakeGenerator(TestSampleList, NTestSamples,
 #                          cachefile="/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
 #
-print "Train Class Index Map:", Train_genC.ClassIndexMap
+#print "Train Class Index Map:", Train_genC.ClassIndexMap
 # print "Test Class Index Map:", Test_genC.ClassIndexMap
 
-Cache = True
+#Cache = True
 
-if Preload:
-    print "Caching data in memory for faster processing after first epoch. Hope you have enough memory."
-    Train_gen = Train_genC.PreloadGenerator()
-    Test_gen = Test_genC.PreloadGenerator()
-elif Cache:
-    print "Caching data on disk for faster processing after first epoch. Hope you have enough disk space."
-    Train_gen = Train_genC.DiskCacheGenerator(n_threads_cache)
-    Test_gen = Test_genC.DiskCacheGenerator(n_threads_cache)
-else:
-    Train_gen = Train_genC.Generator()
-    Test_gen = Test_genC.Generator()
+#if Preload:
+#    print "Caching data in memory for faster processing after first epoch. Hope you have enough memory."
+#    Train_gen = Train_genC.PreloadGenerator()
+#    Test_gen = Test_genC.PreloadGenerator()
+#elif Cache:
+#    print "Caching data on disk for faster processing after first epoch. Hope you have enough disk space."
+#    Train_gen = Train_genC.DiskCacheGenerator(n_threads_cache)
+#    Test_gen = Test_genC.DiskCacheGenerator(n_threads_cache)
+#else:
+#    Train_gen = Train_genC.Generator()
+#    Test_gen = Test_genC.Generator()
 
 # Build/Load the Model
 from DLTools.ModelWrapper import ModelWrapper
-from LArTPCDNN.Models import *
+from LArTPCDNN.Recon3DModels import *
 
 # You can automatically load the latest previous training of this model.
 if TestDefaultParam("LoadPreviousModel") and not LoadModel:
@@ -132,10 +132,10 @@ if FailedLoad:
 
     print "Building Model...",
 
-    View1Shape = (240, 4096)
-    View2Shape = (240, 4096)
+    View1Shape = (240, 4096, 2)
+    View2Shape = (240, 4096, 2)
 
-    ReconstructionModel = Model2DViewsTo3D(Name, View1Shape, View2Shape, Width, Depth,
+    ReconstructionModel = Model2DViewsTo3DConv(Name, View1Shape, View2Shape, Width, Depth,
                                            BatchSize, NClasses,
                                            init=TestDefaultParam("WeightInitialization", 'normal'),
                                            # activation=TestDefaultParam("activation","relu"),

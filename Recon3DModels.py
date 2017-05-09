@@ -15,7 +15,7 @@ import numpy as np
 class Model2DViewsTo3DDense(ModelWrapper):
     def __init__(self, Name, View1Shape, View2Shape, width=0, depth=0, BatchSize=2048, N_Classes=0,
                  init=0, BatchNormalization=False, Dropout=False, **kwargs):
-        super(Model2DViewsTo3DDense, self).__init__(Name, **kwargs)
+        super(Model2DViewsTo3DDense, self).__init__(Name, Loss="categorical_crossentropy", **kwargs)
 
         self.width = width
         self.depth = depth
@@ -41,9 +41,9 @@ class Model2DViewsTo3DDense(ModelWrapper):
     def Build(self):
         input1 = Input(self.input1_shape)
         input2 = Input(self.input2_shape)
-        input1 = Flatten(input_shape=self.input1_shape)(input1)
-        input2 = Flatten(input_shape=self.input2_shape)(input2)
-        modelT = concatenate([input1, input2])
+        flat1 = Flatten(input_shape=self.input1_shape)(input1)
+        flat2 = Flatten(input_shape=self.input2_shape)(input2)
+        modelT = concatenate([flat1, flat2])
 
         # model.add(Dense(self.width,init=self.init))
         modelT = (Activation('relu')(modelT))
@@ -53,21 +53,21 @@ class Model2DViewsTo3DDense(ModelWrapper):
                 modelT = BatchNormalization()(modelT)
 
             modelT = Dense(self.width, kernel_initializer=self.init)(modelT)
-            modelT = Activation(self.Activation)(modelT)
+            modelT = Activation("softmax")(modelT)
 
             if self.Dropout:
                 modelT = Dropout(self.Dropout)(modelT)
 
         modelT = Dense(self.N_Classes, activation='softmax', kernel_initializer=self.init)(modelT)
 
-        self.Model = Model(input, modelT)
+        self.Model = Model(inputs=[input1, input2], outputs=modelT)
 
 
 
 class Model2DViewsTo3DConv(ModelWrapper):
     def __init__(self, Name, View1Shape, View2Shape, width=0, depth=0, BatchSize=2048, N_Classes=0,
                  init=0, BatchNormalization=False, Dropout=False, **kwargs):
-        super(Model2DViewsTo3DConv, self).__init__(Name, **kwargs)
+        super(Model2DViewsTo3DConv, self).__init__(Name, Loss="categorical_crossentropy", **kwargs)
 
         self.width = width
         self.depth = depth
@@ -109,17 +109,15 @@ class Model2DViewsTo3DConv(ModelWrapper):
         encoded2 = MaxPooling2D((2, 2), padding='same')(y)
 
         # concatenate images
-        z = concatenate([encoded1, encoded2])
+        #z = concatenate([encoded1, encoded2])
 
         # Now decode in 3D
-        z = Conv3D(8, (3, 3), activation='relu', padding='same')(z)
-        z = UpSampling3D((2, 2))(z)
-        z = Conv3D(32, (3, 3), activation='relu', padding='same')(z)
-        z = UpSampling3D((2, 2))(z)
-        z = Conv3D(64, (3, 3), activation='relu')(z)
-        z = UpSampling3D((2, 2))(z)
-        decoded = Conv3D(1, (3, 3), activation='sigmoid', padding='same')(z)
+        z = Conv3D(8, (3, 3, 3), activation='relu', padding='same')(encoded1 + encoded2)
+        z = UpSampling3D((2, 2, 2))(z)
+        z = Conv3D(32, (3, 3, 3), activation='relu', padding='same')(z)
+        z = UpSampling3D((2, 2, 2))(z)
+        z = Conv3D(64, (3, 3, 3), activation='relu')(z)
+        z = UpSampling3D((2, 2, 2))(z)
+        decoded = Conv3D(1, (3, 3, 3), activation='sigmoid', padding='same')(z)
 
-        autoencoder = Model(inputs=[input1, input2], outputs=decoded)
-
-        self.Model = Model(input, autoencoder)
+        self.Model = Model(inputs=[input1, input2], outputs=decoded)

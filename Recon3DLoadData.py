@@ -166,7 +166,7 @@ def LArIATDataGenerator(FileSearch="/data/LArIAT/*.h5",DownSampleSize=4, ScanWin
 
 
 
-def LarTPCDataGenerator(files="/data", is2D = False, batchsize=16, datasets=['images3D/C', 'images3D/V'], Norm=True,
+def LarTPCDataGenerator(files="/data", is2D = False, batchsize=128, datasets=['images3D/C', 'images3D/V'], Norm=True,
                         bins=None, EnergyCut=0.61, DownSampleSize = 2, ScanWindowSize = 256, **kwargs):
     Samples = []
 

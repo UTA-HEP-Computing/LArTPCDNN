@@ -48,7 +48,7 @@ from LArTPCDNN.Recon3DLoadData import *
 
 print "Loading 2D and 3D data"
 
-#Train_gen = combined2D3DGenerator()
+Train_gen = combined2D3DGenerator()
 
 print "Testing 2D and 3D data load"
 
@@ -132,10 +132,10 @@ if FailedLoad:
 
     print "Building Model...",
 
-    View1Shape = (240, 4096, 2)
-    View2Shape = (240, 4096, 2)
+    View1Shape = (240, 256)
+    View2Shape = (240, 256)
 
-    ReconstructionModel = Model2DViewsTo3DConv(Name, View1Shape, View2Shape, Width, Depth,
+    ReconstructionModel = Model2DViewsTo3DDense(Name, View1Shape, View2Shape, Width, Depth,
                                            BatchSize, NClasses,
                                            init=TestDefaultParam("WeightInitialization", 'normal'),
                                            # activation=TestDefaultParam("activation","relu"),
@@ -205,17 +205,17 @@ if Train or (RecoverMode and FailedLoad):
         verbose = 1  # Set to 2
 
     print "Evaluating score on test sample..."
-    score = ReconstructionModel.Model.evaluate_generator(Test_gen, steps=NTestSamples / BatchSize)
+    #score = ReconstructionModel.Model.evaluate_generator(Test_gen, steps=NTestSamples / BatchSize)
 
-    print "Initial Score:", score
-    ReconstructionModel.MetaData["InitialScore"] = score
+    #print "Initial Score:", score
+    #ReconstructionModel.MetaData["InitialScore"] = score
 
     ReconstructionModel.History = ReconstructionModel.Model.fit_generator(Train_gen,
                                                                           steps_per_epoch=(NSamples / BatchSize),
                                                                           epochs=Epochs,
                                                                           verbose=verbose,
-                                                                          validation_data=Test_gen,
-                                                                          validation_steps=NTestSamples / BatchSize,
+                                                                          #validation_data=Test_gen,
+                                                                          #validation_steps=NTestSamples / BatchSize,
                                                                           callbacks=callbacks)
 
     score = ReconstructionModel.Model.evaluate_generator(Test_gen, steps=NTestSamples / BatchSize)

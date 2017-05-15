@@ -28,6 +28,8 @@ if LowMemMode:
 NSamples = MaxEvents - NTestSamples
 
 
+NSamples = BatchSize
+
 # Function to help manage optional configurations. Checks and returns
 # if an object is in current scope. Return default value if not.
 def TestDefaultParam(Config):
@@ -136,7 +138,7 @@ if FailedLoad:
     View2Shape = (240, 256)
 
     ReconstructionModel = Model2DViewsTo3DDense(Name, View1Shape, View2Shape, Width, Depth,
-                                           BatchSize, NClasses,
+                                           BatchSize, 240*240*256,
                                            init=TestDefaultParam("WeightInitialization", 'normal'),
                                            # activation=TestDefaultParam("activation","relu"),
                                            Dropout=TestDefaultParam("DropoutLayers", 0.5),
@@ -216,7 +218,8 @@ if Train or (RecoverMode and FailedLoad):
                                                                           verbose=verbose,
                                                                           #validation_data=Test_gen,
                                                                           #validation_steps=NTestSamples / BatchSize,
-                                                                          callbacks=callbacks)
+                                                                          #callbacks=callbacks
+                                                                          )
 
     score = ReconstructionModel.Model.evaluate_generator(Test_gen, steps=NTestSamples / BatchSize)
 

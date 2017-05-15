@@ -55,11 +55,11 @@ def combined2D3DGenerator():
 
     def MergerGenerator(T2D, T3D):
         while True:
-            s2d = T2D.Generator().next()
-            s3d = T3D.Generator().next()
-            yield [s2d[0], s2d[1], s3d[0]]
+            s2d = T2D.next()
+            s3d = T3D.next()
+            yield ([s2d[0], s2d[1]], [np.reshape(s3d[0], [128,240*240*256])])
     
-    return MergerGenerator(Train_gen2D, Train_gen3D)
+    return MergerGenerator(Train_gen2D.Generator(), Train_gen3D.Generator())
 
 
 

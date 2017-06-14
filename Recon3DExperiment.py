@@ -50,7 +50,7 @@ from LArTPCDNN.Recon3DLoadData import *
 
 print "Loading 2D and 3D data"
 
-Train_gen = combined2D3DGenerator()
+Train_gen = combined2D3DGenerator(datapath = "/data/cloud/project/data/apr_9/")
 
 print "Testing 2D and 3D data load"
 

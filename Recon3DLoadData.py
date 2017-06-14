@@ -4,65 +4,6 @@ import numpy as np
 
 from DLTools.ThreadedGenerator import DLMultiClassGenerator, DLMultiClassFilterGenerator
 
-def combined2D3DGenerator():
-    #datapath = "/data/datasets/LarTPC/apr_9/"
-    datapath = "/data/cloud/project/data/apr_9/"
-    # Pull in datafiles
-    filelist2d = glob.glob(datapath + "2d/*")
-    filelist3d = glob.glob(datapath + "3d/*")
-    filelist2d.sort()
-    filelist3d.sort()
-    assert len(filelist2d) == len(filelist3d), "Number of 2D and 3D files mismatch!"
-
-    try:
-        n_threads = int(sys.argv[1])
-    except:
-        n_threads = 6
-
-    try:
-        n_threads2 = int(sys.argv[2])
-    except:
-        n_threads2 = n_threads
-
-
-    Train_gen3D = LarTPCDataGenerator(filelist3d, n_threads=n_threads, max=100000, 
-                                    bins=(240, 240, 256), verbose=False)
-
-    DownSampleSize=8
-    ScanWindowSize=256
-    Normalize=True
-    closefiles=False
-    m = 1
-    Train_gen2D =LArIATDataGenerator(FileSearch=datapath + "2d/*",
-                                  max=128*10000, 
-                                  batchsize=128,
-                                  DownSampleSize=DownSampleSize,
-                                  ScanWindowSize=ScanWindowSize,
-                                  Norm=Normalize,
-                                  #shapes=[(128*m, 2, 240, 4096/DownSampleSize), (128*m, 16)],
-                                  #shapes=[(128*m, 240, ScanWindowSize), (128, 240, 256)],
-                                  #shapes=[(128*m, 2, 240, ScanWindowSize), (128*m, 16)], 
-                                  #shapes=[(128*m, 240, ScanWindowSize)],
-                                  n_threads=n_threads,
-                                  SharedDataQueueSize=1,
-                                  multiplier=m,
-                                  closefiles=closefiles,
-                                  verbose=False,
-                                  timing=False,
-                                  sleep=1,
-                                  Wrap=False)
-
-
-    def MergerGenerator(T2D, T3D):
-        while True:
-            s2d = T2D.next()
-            s3d = T3D.next()
-            yield ([s2d[0], s2d[1]], [np.reshape(s3d[0], [128,240*240*256])])
-    
-    return MergerGenerator(Train_gen2D.Generator(), Train_gen3D.Generator())
-
-
-
 def main():
     #datapath = "/data/datasets/LarTPC/apr_9/"
     datapath = "/data/cloud/project/data/apr_9/"
@@ -126,6 +67,64 @@ def main():
             count += NN
 
 
+def combined2D3DGenerator(datapath):
+    #datapath = "/data/datasets/LarTPC/apr_9/"
+    # Pull in datafiles
+    filelist2d = glob.glob(datapath + "2d/*")
+    filelist3d = glob.glob(datapath + "3d/*")
+    filelist2d.sort()
+    filelist3d.sort()
+    assert len(filelist2d) == len(filelist3d), "Number of 2D and 3D files mismatch!"
+
+    try:
+        n_threads = int(sys.argv[1])
+    except:
+        n_threads = 6
+
+    try:
+        n_threads2 = int(sys.argv[2])
+    except:
+        n_threads2 = n_threads
+
+
+    Train_gen3D = LarTPCDataGenerator(filelist3d, n_threads=n_threads, max=100000, 
+                                    bins=(240, 240, 256), verbose=False)
+
+    DownSampleSize=8
+    ScanWindowSize=256
+    Normalize=True
+    closefiles=False
+    m = 1
+    Train_gen2D =LArIATDataGenerator(FileSearch=datapath + "2d/*",
+                                  max=128*10000, 
+                                  batchsize=128,
+                                  DownSampleSize=DownSampleSize,
+                                  ScanWindowSize=ScanWindowSize,
+                                  Norm=Normalize,
+                                  #shapes=[(128*m, 2, 240, 4096/DownSampleSize), (128*m, 16)],
+                                  #shapes=[(128*m, 240, ScanWindowSize), (128, 240, 256)],
+                                  #shapes=[(128*m, 2, 240, ScanWindowSize), (128*m, 16)], 
+                                  #shapes=[(128*m, 240, ScanWindowSize)],
+                                  n_threads=n_threads,
+                                  SharedDataQueueSize=1,
+                                  multiplier=m,
+                                  closefiles=closefiles,
+                                  verbose=False,
+                                  timing=False,
+                                  sleep=1,
+                                  Wrap=False)
+
+
+    def MergerGenerator(T2D, T3D):
+        while True:
+            s2d = T2D.next()
+            s3d = T3D.next()
+            yield ([s2d[0], s2d[1]], [np.reshape(s3d[0], [128,240*240*256])])
+    
+    return MergerGenerator(Train_gen2D.Generator(), Train_gen3D.Generator())
+
+
+
 def LArIATDataGenerator(FileSearch="/data/LArIAT/*.h5",DownSampleSize=4, ScanWindowSize=256,EnergyCut=0.61,
                         datasetnames=[u'features'], Norm=False, MaxFiles=-1, **kwargs):
 
@@ -157,9 +156,6 @@ def LArIATDataGenerator(FileSearch="/data/LArIAT/*.h5",DownSampleSize=4, ScanWin
                                     preprocessfunction=ProcessWireData(DownSampleSize,ScanWindowSize,Norm),
                                     **kwargs)
     return GC
-
-
-
 
 
 
@@ -288,6 +284,5 @@ def DownSample(y,factor,batchsize,sumabs=False):
 
 
 
-
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()

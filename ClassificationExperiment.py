@@ -124,7 +124,7 @@ else:
     FailedLoad=False
 
 # Or Build the model from scratch
-if not MyModel.Model:
+if FailedLoad:
     import keras
     print "Building Model...",
 

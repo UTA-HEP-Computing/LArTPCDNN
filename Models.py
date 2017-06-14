@@ -83,5 +83,3 @@ class MergerModel(ModelWrapper):
         self.modelT=modelT
         
         self.Model=Model(MInputs,modelT)
-
-                

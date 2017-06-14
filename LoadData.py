@@ -92,6 +92,7 @@ def LArIATDataGenerator(FileSearch="/data/LArIAT/*.h5",DownSampleSize=4, ScanWin
     Files = glob.glob(FileSearch)
 
     print "Found",len(Files),"files."
+    Files.sort()
     
     if MaxFiles!=-1:
         random.shuffle(Files)
@@ -182,8 +183,10 @@ def DivideFiles(FileSearch="/data/LArIAT/h5_files/*.h5",Fractions=[.9,.1],datase
                      
 if __name__ == '__main__':
     import sys
-    FileSearch="/data/LArIAT/h5_files/*.h5"
-
+    #FileSearch="/data/LArIAT/h5_files/*.h5"
+    
+    # CHANGE TO /data/cloud/project/data/apr_9/2d/*.h5
+    FileSearch="/data/cloud/project/data/apr_9/2d/*.h5"
     try:
         n_threads=int(sys.argv[1])
     except:
@@ -206,14 +209,14 @@ if __name__ == '__main__':
     Normalize=True
     closefiles=False
     Train_gen=LArIATDataGenerator(FileSearch=FileSearch,
-                                  cachefile="LArIAT-LoadDataTest-Cache.h5",
+                                  #cachefile="LArIAT-LoadDataTest-Cache.h5",
                                   max=128*10000, 
                                   batchsize=128,
                                   DownSampleSize=DownSampleSize,
                                   ScanWindowSize=ScanWindowSize,
                                   Norm=Normalize,
                                   #shapes=[(128*m, 2, 240, 4096/DownSampleSize), (128*m, 16)],
-                                  shapes=[(128*m, 2, 240, ScanWindowSize), (128*m, 16)],
+                                  #shapes=[(128*m, 240, ScanWindowSize), (128, 240, 256)],
                                   n_threads=n_threads,
                                   SharedDataQueueSize=1,
                                   multiplier=m,

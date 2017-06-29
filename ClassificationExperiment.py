@@ -65,7 +65,7 @@ def MakeGenerator(SampleList,NSamples,
 
     return DLMultiClassFilterGenerator(SampleList, FilterEnergy(EnergyCut), max=NSamples,
                                        preprocessfunction=ProcessWireData(DownSampleSize,ScanWindowSize,Normalize),
-                                       postprocessfunction=MergeInputs(),
+                                       postprocessfunction=MergeInputsInception(),
                                        batchsize=BatchSize,
                                        shapes=shapes,
                                        n_threads=n_threads,
@@ -123,8 +123,9 @@ if not MyModel.Model:
 else:
     FailedLoad=False
 
+OldModel=False
 # Or Build the model from scratch
-if not MyModel.Model:
+if not MyModel.Model and OldModel:
     import keras
     print "Building Model...",
 
@@ -162,6 +163,24 @@ if not MyModel.Model:
     MyModel.Build()
     print " Done."
 
+if not MyModel.Model and not OldModel:
+    import keras
+    print "Building Model...",
+### ^^^^^ I change here (2,240,256) --> (1,240,256)
+####^^^^^change output_shape=2 --> output_shape = (128, 10)
+    MyModel=SiameseInceptionClassification( Name, (1,240,256), width=0, depth=0, BatchSize=2048,
+                                            N_classes=100, kernel_initializer=0, BatchNormalization=False, Dropout=False,
+                                            NoClassificationLayer=False,
+                                            activation='relu',nb_filter=np.array([32]),nb_row=np.array([4]),
+                                            nb_column=np.array([4]),subsample=(1,1),output_shape=10,output_act='linear')
+   
+ 
+    # Configure the Optimizer, using optimizer configuration parameter.
+    MyModel.Loss=loss
+    # Build it
+    MyModel.Build()
+    print " Done."
+    
 
 print "Output Directory:",MyModel.OutDir
 # Store the Configuration Dictionary
@@ -223,20 +242,21 @@ if Train or (RecoverMode and FailedLoad):
         verbose=1 # Set to 2
 
     print "Evaluating score on test sample..."
-    score = MyModel.Model.evaluate_generator(Test_gen, steps=NTestSamples/BatchSize)
+    score = MyModel.Model.evaluate_generator(Test_gen, NTestSamples/BatchSize) #steps=NTestSamples/BatchSize)
     
     print "Initial Score:", score
     MyModel.MetaData["InitialScore"]=score
         
     MyModel.History = MyModel.Model.fit_generator(Train_gen,
-                                                  steps_per_epoch=(NSamples/BatchSize),
-                                                  epochs=Epochs,
+                                                  samples_per_epoch= (NSamples),###^^^steps_per_epoch=(NSamples/BatchSize),
+						  ###^^^The steps_per_epoch is typically samples_per_epoch / batch_size.
+                                                  nb_epoch = Epochs,###^^^epochs=Epochs,
                                                   verbose=verbose, 
                                                   validation_data=Test_gen,
-                                                  validation_steps=NTestSamples/BatchSize,
+                                                  nb_val_samples = NTestSamples,###^^^validation_steps=NTestSamples/BatchSize,
                                                   callbacks=callbacks)
 
-    score = MyModel.Model.evaluate_generator(Test_gen, steps=NTestSamples/BatchSize)
+    score = MyModel.Model.evaluate_generator(Test_gen, NTestSamples/BatchSize) #steps=NTestSamples/BatchSize)
 
 
     print "Evaluating score on test sample..."
@@ -258,7 +278,7 @@ else:
 # Analysis
 if Analyze:
     Test_genC = MakeGenerator(TestSampleList, NTestSamples,
-                              cachefile=Test_genC.cachefilename) #"/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
+                              cachefile="/tmp/LArTPCDNN-LArIAT-TestEvent-Cache-2000-PID947.h5") ###^^^Test_genC.cachefilename) #"/tmp/LArTPCDNN-LArIAT-TestEvent-Cache.h5")
 
     Test_genC.PreloadData(n_threads_cache)
     [Test_X_View1, Test_X_View2], Test_Y = MergeInputs()(tuple(Test_genC.D))

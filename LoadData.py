@@ -121,6 +121,11 @@ def MergeInputsOld():
         return [X[0][:,0,:,:],X[0][:,1,:,:]],X[1]
     return f
 
+def MergeInputsInception():
+    def f(X):
+        return    {'input_0': np.expand_dims(X[0], axis=1),'input_1': np.expand_dims(X[1], axis=1)}, {'output':X[2], 'aux_output1':X[2], 'aux_output2':X[2]}
+    return f
+
 def MergeInputs():
     def f(X):
         return [X[0],X[1]],X[2]
